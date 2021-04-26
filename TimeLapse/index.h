@@ -1,9 +1,11 @@
-R"(<!doctype html>
+//File: index_ov2640.html
+const uint8_t index_ov2640_html[] PROGMEM = R"=====(
+<!doctype html>
 <html>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>ESP32 OV2460</title>
+        <title id="title">ESP32 OV2640</title>
         <style>
             body {
                 font-family: Arial,Helvetica,sans-serif;
@@ -256,6 +258,15 @@ R"(<!doctype html>
                 background: #363636
             }
 
+            input[type=text] {
+                border: 1px solid #363636;
+                font-size: 14px;
+                height: 20px;
+                margin: 1px;
+                outline: 0;
+                border-radius: 5px
+            }
+
             .switch {
                 display: block;
                 position: relative;
@@ -314,11 +325,13 @@ R"(<!doctype html>
 
             .image-container {
                 position: relative;
-                min-width: 160px
+                min-width: 160px;
+                transform-origin: top left
             }
 
             .close {
                 position: absolute;
+                z-index: 99;
                 right: 5px;
                 top: 5px;
                 background: #ff3034;
@@ -334,26 +347,41 @@ R"(<!doctype html>
             .hidden {
                 display: none
             }
+
+            .inline-button {
+                line-height: 20px;
+                margin: 2px;
+                padding: 1px 4px 2px 4px;
+            }
+
         </style>
     </head>
     <body>
         <section class="main">
             <div id="logo">
-                <label for="nav-toggle-cb" id="nav-toggle">&#9776;&nbsp;&nbsp;Toggle OV2640 settings</label>
+                <label for="nav-toggle-cb" id="nav-toggle" style="float:left;">&#9776;&nbsp;&nbsp;Settings&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                <button id="get-still" style="float:left;">Get Still</button>
+                <button id="toggle-stream" style="float:left;">Start Stream</button>
             </div>
             <div id="content">
                 <div id="sidebar">
                     <input type="checkbox" id="nav-toggle-cb" checked="checked">
                     <nav id="menu">
+                        <div class="input-group" id="lamp-group">
+                            <label for="lamp">Light</label>
+                            <div class="range-min">Off</div>
+                            <input type="range" id="lamp" min="0" max="100" value="0" class="default-action">
+                            <div class="range-max">Full</div>
+                        </div>
                         <div class="input-group" id="framesize-group">
                             <label for="framesize">Resolution</label>
                             <select id="framesize" class="default-action">
                                 <option value="10">UXGA(1600x1200)</option>
                                 <option value="9">SXGA(1280x1024)</option>
                                 <option value="8">XGA(1024x768)</option>
-                                <option value="7">SVGA(800x600)</option>
+                                <option value="7" selected="selected">SVGA(800x600)</option>
                                 <option value="6">VGA(640x480)</option>
-                                <option value="5" selected="selected">CIF(400x296)</option>
+                                <option value="5">CIF(400x296)</option>
                                 <option value="4">QVGA(320x240)</option>
                                 <option value="3">HQVGA(240x176)</option>
                                 <option value="0">QQVGA(160x120)</option>
@@ -361,8 +389,8 @@ R"(<!doctype html>
                         </div>
                         <div class="input-group" id="quality-group">
                             <label for="quality">Quality</label>
-                            <div class="range-min">0</div>
-                            <input type="range" id="quality" min="0" max="63" value="10" class="default-action">
+                            <div class="range-min">10</div>
+                            <input type="range" id="quality" min="10" max="63" value="10" class="default-action">
                             <div class="range-max">63</div>
                         </div>
                         <div class="input-group" id="brightness-group">
@@ -395,6 +423,13 @@ R"(<!doctype html>
                                 <option value="6">Sepia</option>
                             </select>
                         </div>
+                        <div class="input-group" id="awb-group">
+                            <label for="awb">AWB</label>
+                            <div class="switch">
+                                <input id="awb" type="checkbox" class="default-action" checked="checked">
+                                <label class="slider" for="awb"></label>
+                            </div>
+                        </div>
                         <div class="input-group" id="awb_gain-group">
                             <label for="awb_gain">AWB Gain</label>
                             <div class="switch">
@@ -403,9 +438,8 @@ R"(<!doctype html>
                             </div>
                         </div>
                         <div class="input-group" id="wb_mode-group">
-                            <label for="wb_mode">White Balance</label>
+                            <label for="wb_mode">WB Mode</label>
                             <select id="wb_mode" class="default-action">
-                                <option value="-1" selected="selected">Off</option>
                                 <option value="0" selected="selected">Auto</option>
                                 <option value="1">Sunny</option>
                                 <option value="2">Cloudy</option>
@@ -500,6 +534,14 @@ R"(<!doctype html>
                                 <label class="slider" for="vflip"></label>
                             </div>
                         </div>
+                        <div class="input-group" id="rotate-group">
+                            <label for="rotate">Rotate</label>
+                            <select id="rotate" class="rotate-action">
+                                <option value="0" selected="selected">None</option>
+                                <option value="90">Rotate Right</option>
+                                <option value="-90">Rotate Left</option>
+                            </select>
+                        </div>
                         <div class="input-group" id="dcw-group">
                             <label for="dcw">DCW (Downsize EN)</label>
                             <div class="switch">
@@ -507,15 +549,38 @@ R"(<!doctype html>
                                 <label class="slider" for="dcw"></label>
                             </div>
                         </div>
-                        <div class="input-group" id="interval-group">
-                            <label for="interval">Time-Lapse Interval [ms]</label>
-                            <input type="number" id="interval" min="0" max="1000000000" value="1000" class="default-action">
+                        <div class="input-group" id="colorbar-group">
+                            <label for="colorbar">Color Bar</label>
+                            <div class="switch">
+                                <input id="colorbar" type="checkbox" class="default-action">
+                                <label class="slider" for="colorbar"></label>
+                            </div>
+                        </div>
+                        <div class="input-group" id="face_detect-group">
+                            <label for="face_detect">Face Detection</label>
+                            <div class="switch">
+                                <input id="face_detect" type="checkbox" class="default-action">
+                                <label class="slider" for="face_detect"></label>
+                            </div>
+                        </div>
+                        <div class="input-group" id="face_recognize-group">
+                            <label for="face_recognize">Face Recognition</label>
+                            <div class="switch">
+                                <input id="face_recognize" type="checkbox" class="default-action">
+                                <label class="slider" for="face_recognize"></label>
+                            </div>
                         </div>
                         <section id="buttons">
-                            <button id="get-still">Get Still</button>
-                            <button id="toggle-lapse">Start Time-Lapse</button>
-                            <button id="toggle-stream">Start Stream</button>
+                            <button id="face_enroll" class="disabled" disabled="disabled">Enroll Face</button>
                         </section>
+                        <div class="input-group" id="cam_name-group">
+                            <label for="cam_name">Name:</label>
+                            <div id="cam_name" class="default-action"></div>
+                        </div>
+                        <div class="input-group" id="code_ver-group">
+                            <label for="code_ver">Firmware:</label>
+                            <div id="code_ver" class="default-action"></div>
+                        </div>
                     </nav>
                 </div>
                 <figure>
@@ -526,9 +591,10 @@ R"(<!doctype html>
                 </figure>
             </div>
         </section>
-        <script>
-document.addEventListener('DOMContentLoaded', function (event) 
-{
+    </body>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function (event) {
   var baseHost = document.location.origin
   var streamUrl = baseHost + ':81'
 
@@ -549,8 +615,7 @@ document.addEventListener('DOMContentLoaded', function (event)
     el.disabled = false
   }
 
-  const updateValue = (el, value, updateRemote) => 
-  {
+  const updateValue = (el, value, updateRemote) => {
     updateRemote = updateRemote == null ? true : updateRemote
     let initialValue
     if (el.type === 'checkbox') {
@@ -562,14 +627,16 @@ document.addEventListener('DOMContentLoaded', function (event)
       el.value = value
     }
 
+    const lampGroup = document.getElementById('lamp-group')
+    const camName = document.getElementById('cam_name')
+    const codeVer = document.getElementById('code_ver')
+
     if (updateRemote && initialValue !== value) {
       updateConfig(el);
-    } else if(!updateRemote)
-	{
+    } else if(!updateRemote){
       if(el.id === "aec"){
         value ? hide(exposure) : show(exposure)
-      } else if(el.id === "agc")
-	  {
+      } else if(el.id === "agc"){
         if (value) {
           show(gainCeiling)
           hide(agcGain)
@@ -579,6 +646,19 @@ document.addEventListener('DOMContentLoaded', function (event)
         }
       } else if(el.id === "awb_gain"){
         value ? show(wb) : hide(wb)
+      } else if(el.id === "face_recognize"){
+        value ? enable(enrollButton) : disable(enrollButton)
+      } else if(el.id === "lamp"){
+        if (value == -1) {
+          hide(lampGroup)
+        } else {
+          show(lampGroup)
+        }
+      } else if(el.id === "cam_name"){
+        camName.innerHTML = value;
+        window.document.title = value;
+      } else if(el.id === "code_ver"){
+        codeVer.innerHTML = value;
       }
     }
   }
@@ -590,18 +670,13 @@ document.addEventListener('DOMContentLoaded', function (event)
         value = el.checked ? 1 : 0
         break
       case 'range':
-      	break
       case 'select-one':
         value = el.value
         break
       case 'button':
-      	break
       case 'submit':
         value = '1'
         break
-      case 'number':
-      	value = el.value
-	break
       default:
         return
     }
@@ -624,12 +699,10 @@ document.addEventListener('DOMContentLoaded', function (event)
 
   // read initial values
   fetch(`${baseHost}/status`)
-    .then(function (response) 
-	{
+    .then(function (response) {
       return response.json()
     })
-    .then(function (state) 
-	{
+    .then(function (state) {
       document
         .querySelectorAll('.default-action')
         .forEach(el => {
@@ -641,7 +714,7 @@ document.addEventListener('DOMContentLoaded', function (event)
   const viewContainer = document.getElementById('stream-container')
   const stillButton = document.getElementById('get-still')
   const streamButton = document.getElementById('toggle-stream')
-  const lapseButton = document.getElementById('toggle-lapse')
+  const enrollButton = document.getElementById('face_enroll')
   const closeButton = document.getElementById('close-stream')
 
   const stopStream = () => {
@@ -649,39 +722,21 @@ document.addEventListener('DOMContentLoaded', function (event)
     streamButton.innerHTML = 'Start Stream'
   }
 
-  const stopLapse = () => {
-    lapseButton.innerHTML = 'Start Time-Lapse'
-    const query = `${baseHost}/stopLapse`
-
-    fetch(query)
-      .then(response => {
-        console.log(`request to ${query} finished, status: ${response.status}`)
-      })
-  }
-
   const startStream = () => {
     view.src = `${streamUrl}/stream`
     show(viewContainer)
+    view.scrollIntoView(false);
     streamButton.innerHTML = 'Stop Stream'
   }
 
-  const startLapse = () => {
-    lapseButton.innerHTML = 'Stop Time-Lapse'
-    const query = `${baseHost}/startLapse`
-
-    fetch(query)
-      .then(response => {
-        console.log(`request to ${query} finished, status: ${response.status}`)
-      })
-  }
-  
   // Attach actions to buttons
   stillButton.onclick = () => {
     stopStream()
     view.src = `${baseHost}/capture?_cb=${Date.now()}`
     show(viewContainer)
+    view.scrollIntoView(false);
   }
-  
+
   closeButton.onclick = () => {
     stopStream()
     hide(viewContainer)
@@ -696,14 +751,8 @@ document.addEventListener('DOMContentLoaded', function (event)
     }
   }
 
-  lapseButton.onclick = () => {
-    const lapseEnabled = lapseButton.innerHTML === 'Stop Time-Lapse'
-    if (lapseEnabled) {
-      stopLapse()
-    } else {
-      startLapse()
-    }
-	//updateConfig(lapseButton)
+  enrollButton.onclick = () => {
+    updateConfig(enrollButton)
   }
 
   // Attach default on change action
@@ -745,9 +794,62 @@ document.addEventListener('DOMContentLoaded', function (event)
     awb.checked ? show(wb) : hide(wb)
   }
 
+  // Detection and framesize
+  const detect = document.getElementById('face_detect')
+  const recognize = document.getElementById('face_recognize')
+  const framesize = document.getElementById('framesize')
+  const rotate = document.getElementById('rotate')
+
+  rotate.onchange = () => {
+    rot = rotate.value;
+    if (rot == -90) {
+      viewContainer.style.transform = `rotate(-90deg)  translate(-100%)`;
+    } else if (rot == 90) {
+      viewContainer.style.transform = `rotate(90deg) translate(0, -100%)`
+    } else {
+      viewContainer.style.transform = `rotate(0deg)`
+    }
+  }
+
+  framesize.onchange = () => {
+    updateConfig(framesize)
+    if (framesize.value > 5) {
+      updateValue(detect, false)
+      updateValue(recognize, false)
+    }
+  }
+
+  detect.onchange = () => {
+    if (framesize.value > 5) {
+      alert("Please select CIF or lower resolution before enabling this feature!");
+      updateValue(detect, false)
+      return;
+    }
+    updateConfig(detect)
+    if (!detect.checked) {
+      disable(enrollButton)
+      updateValue(recognize, false)
+    }
+  }
+
+  recognize.onchange = () => {
+    if (framesize.value > 5) {
+      alert("Please select CIF or lower resolution before enabling this feature!");
+      updateValue(recognize, false)
+      return;
+    }
+    updateConfig(recognize)
+    if (recognize.checked) {
+      enable(enrollButton)
+      updateValue(detect, true)
+    } else {
+      disable(enrollButton)
+    }
+  }
 })
 
-        </script>
-    </body>
+    </script>
+
 </html>
-)"
+)=====";
+size_t index_ov2640_html_len = sizeof(index_ov2640_html);

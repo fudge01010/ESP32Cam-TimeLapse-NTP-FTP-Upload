@@ -1,51 +1,33 @@
 #include "Arduino.h"
 #include "camera.h"
 #include <stdio.h>
-#include "file.h"
+#include "ftp.h"
+#include "time.h"
 
-unsigned long fileIndex = 0;
-unsigned long lapseIndex = 0;
-unsigned long frameInterval = 1000;
-bool mjpeg = true;
-bool lapseRunning = false;
+unsigned long frameInterval = 60000 * 5; // Every 5 minute
 unsigned long lastFrameDelta = 0;
+char timeStringBuff[50];
 
-void setInterval(unsigned long delta)
+void getDate()
 {
-    frameInterval = delta;
-}
+  struct tm timeinfo;
+  if(!getLocalTime(&timeinfo)){
+    Serial.println("Failed to obtain time");
+    return;
+  }
 
-bool startLapse()
-{
-    if(lapseRunning) return true;
-    fileIndex = 0;
-    char path[32];
-    for(; lapseIndex < 10000; lapseIndex++)
-    {
-        sprintf(path, "/lapse%03d", lapseIndex);
-        if (!fileExists(path))
-        {
-            createDir(path);
-            lastFrameDelta = 0;
-            lapseRunning = true;
-            return true;
-        }
-    }
-	return false;
-}
+  strftime(timeStringBuff, sizeof(timeStringBuff), "lapse-%m-%d-%Y-%H-%M-%S.jpg", &timeinfo);
 
-bool stopLapse()
-{
-    lapseRunning = false;
+  return;
 }
 
 bool processLapse(unsigned long dt)
 {
-    if(!lapseRunning) return false;
-
     lastFrameDelta += dt;
     if(lastFrameDelta >= frameInterval)
     {
+        getDate();
+
         lastFrameDelta -= frameInterval;
         camera_fb_t *fb = NULL;
         esp_err_t res = ESP_OK;
@@ -56,15 +38,10 @@ bool processLapse(unsigned long dt)
 	        return false;
         }
 
-        char path[32];
-        sprintf(path, "/lapse%03d/pic%05d.jpg", lapseIndex, fileIndex);
-        Serial.println(path);
-        if(!writeFile(path, (const unsigned char *)fb->buf, fb->len))
+        if(!uploadFile(timeStringBuff, (unsigned char *)fb->buf, fb->len))
         {
-            lapseRunning = false;
             return false;
         }
-        fileIndex++;
         esp_camera_fb_return(fb);
     }
     return true;
