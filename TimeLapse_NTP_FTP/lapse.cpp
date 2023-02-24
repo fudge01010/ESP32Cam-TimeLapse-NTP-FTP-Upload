@@ -4,7 +4,7 @@
 #include "ftp.h"
 #include "time.h"
 
-unsigned long frameInterval = 30000; // Every 5 minute
+unsigned long frameInterval = 30000; // Every 30s (30 * 1000 = 30000)
 unsigned long lastFrameDelta = 0;
 char timeStringBuff[50];
 
