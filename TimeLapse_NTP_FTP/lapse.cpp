@@ -4,7 +4,7 @@
 #include "ftp.h"
 #include "time.h"
 
-unsigned long frameInterval = 60000 * 5; // Every 5 minute
+unsigned long frameInterval = 30000; // Every 5 minute
 unsigned long lastFrameDelta = 0;
 char timeStringBuff[50];
 
@@ -23,26 +23,45 @@ void getDate()
 
 bool processLapse(unsigned long dt)
 {
+    
     lastFrameDelta += dt;
     if(lastFrameDelta >= frameInterval)
     {
+        Serial.print(lastFrameDelta);
+        Serial.print(" ");
+        Serial.println(dt);
+        // turn flash on
+        digitalWrite(4, HIGH);
+        // let WB + AGC settle
+        delay(3000);
         getDate();
 
         lastFrameDelta -= frameInterval;
         camera_fb_t *fb = NULL;
         esp_err_t res = ESP_OK;
+        
         fb = esp_camera_fb_get();
+        
         if (!fb)
         {
 	        Serial.println("Camera capture failed");
+          // flash back off
+          digitalWrite(4, LOW);
 	        return false;
         }
+        // should have buf now, kill flash
+        digitalWrite(4, LOW);
+
 
         if(!uploadFile(timeStringBuff, (unsigned char *)fb->buf, fb->len))
         {
+            // flash back off
+            digitalWrite(4, LOW);
             return false;
         }
         esp_camera_fb_return(fb);
     }
+    // flash back off
+    digitalWrite(4, LOW);
     return true;
 }
