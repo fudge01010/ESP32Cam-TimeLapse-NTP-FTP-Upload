@@ -13,6 +13,7 @@
 bool initCamera()
 {
   camera_config_t config;
+  config.grab_mode = CAMERA_GRAB_LATEST;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
   config.pin_d0 = Y2_GPIO_NUM;
@@ -36,6 +37,7 @@ bool initCamera()
   //init with high specs to pre-allocate larger buffers
   if (psramFound())
   {
+    Serial.println("psram found");
     config.frame_size = FRAMESIZE_UXGA;
     config.jpeg_quality = 20;
     config.fb_count = 2;
