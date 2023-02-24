@@ -13,12 +13,13 @@ Lapse is started automatically after board is powered up.
 My Arduino Environment settings:
 
 ```
-Board: ESP32 Dev Module
+Board: ESP32 Wrover Module
 CPU Freq: 240Mhz
 Flash Size: 4MB
-Partition Scheme Default 4MB with spiffs
-PSRAM: Enabled # Is important for UXGA frame size
+Flash freq: 80MHz
+Partition Scheme: Minimal SPIFFS (1.9 w/OTA)
 ```
+
 
 ## Convert images to movie
 
