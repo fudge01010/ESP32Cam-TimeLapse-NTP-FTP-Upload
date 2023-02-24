@@ -4,7 +4,7 @@ Project forked from https://github.com/Ceda/ESP32Cam-TimeLapse-NTP-FTP-Upload - 
 - Uses NTP to get local time, and saves filenames with a sane date+time pattern.
 - Uploads files (via FTP) to provided server
 - Adjusted camera config settings to use "most recent" image from framebuffer
-- Added support for Flash (internal or external).
+- Added support for LED Flash (internal; can change pin from 4 for an external).
 
 
 Lapse is started automatically after board is powered up.
